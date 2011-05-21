@@ -1,30 +1,34 @@
 {
+  "author": "Zach Carter <zach@carter.name> (http://zaa.ch)",
   "name": "reflect",
+  "description": "JavaScript parser adhering to Mozilla's parser API",
   "version": "0.0.1",
-  "author": "Zach Carter",
-  "email": "zach@carter.name",
   "keywords": [
     "parser",
     "reflect",
     "javascript"
   ],
-  "githubName": "reflect.js",
-  "type": "zip",
-  "location": "http://github.com/zaach/reflect.js/zipball/master",
-  "main": "dist/reflect",
-  "engines": {
-    "node": ">=0.1.90"
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/zaach/reflect.js.git"
   },
-  "directories": {
-    "lib": "lib",
-    "bin": "./bin"
+  "bugs": {
+    "web": "http://github.com/zaach/reflect.js/issues"
+  },
+  "main": "dist/reflect.js",
+  "engines": {
+    "node": "0.4 || 0.5"
+  },
+  "devDependencies": {
+    "jison": "*",
+    "uglify-js": "*"
+  },
+  "scripts": {
+    "test": "node test/reflect-parse.js"
   },
   "modules": {
     "reflect.js": "dist/reflect.js",
     "parser.js": "dist/parser.js",
     "nodes.js": "dist/nodes.js"
-  },
-  "files": [
-    ""
-  ]
+  }
 }
