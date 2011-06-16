@@ -5,9 +5,64 @@
 
 %%
 
+Pattern
+    : OPENBRACE CLOSEBRACE
+      { $$ = yy.Node('ObjectPattern', [], yy.loc([@1,@2])); }
+    | OPENBRACE FieldList CLOSEBRACE
+      { $$ = yy.Node('ObjectPattern', $FieldList, yy.loc([@1,@3])); }
+    | OPENBRACE FieldList ',' CLOSEBRACE
+      { $$ = yy.Node('ObjectPattern', $FieldList, yy.loc([@1,@4])); }
+    | '[' ']'
+      { $$ = yy.Node('ArrayPattern', [], yy.loc([@1,@2])); }
+    /*| '[' '...' Element ']'*/
+    | '[' Elision ']'
+      { $$ = yy.Node('ArrayPattern', [,], yy.loc([@1,@3])); }
+    /*| '[' Elision '...' Element ']'*/
+    | '[' ArrayPatternList ']'
+      { $$ = yy.Node('ArrayPattern', $2, yy.loc([@1,@3])); }
+    /*| '[' ArrayPatternList '...' Element ']'*/
+    | '[' ArrayPatternList ',' ElisionOpt ']'
+      { $$ = yy.Node('ArrayPattern', $2.concat($4), yy.loc([@1,@5])); }
+    /*| '[' ArrayPatternList ',' ElisionOpt '...' Element ']'*/
+    ;
+
+ArrayPatternList
+    : Element
+      { $$ = [$1]; }
+    | Elision Element
+      { $$ = $1; $$.push($2); }
+    | ArrayPatternList ',' ElisionOpt Element
+      { $$ = $1.concat($3); $$.push($4); }
+    ;
+
+FieldList
+    : Field
+      { $$ = [$1]; }
+    | FieldList ',' Field
+      { $$ = $1; $$.push($3); }
+    ;
+
+Field
+    : IDENT
+      { $$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:yy.Node('Identifier', $1,yy.loc(@1)),kind: "init"}; }
+    | IDENT ':' Element
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
+    ;
+
+Element
+    : Pattern
+    | IDENT
+      { $$ = yy.Node('Identifier', $1,yy.loc(@1)) }
+    ;
+
+  /* break up keywords to workaround some LALR(1) limitations */
 IdentifierName
     : IDENT
-    | NULLTOKEN
+    | Keyword
+    ;
+
+Keyword
+    : NULLTOKEN
     | TRUETOKEN
     | FALSETOKEN
     | BREAK
@@ -33,6 +88,7 @@ IdentifierName
     | TRY
     | TYPEOF
     | VAR
+    | LET
     | VOIDTOKEN
     | WHILE
     | WITH
@@ -67,7 +123,11 @@ RegularExpressionLiteralBegin
     ;
 
 Property
-    : IdentifierName ':' AssignmentExpr
+    : IDENT /* object shorthand strawman */
+      { $$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:yy.Node('Identifier', $1,yy.loc(@1)),kind: "init"}; }
+    | IDENT ':' AssignmentExpr
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
+    | Keyword ':' AssignmentExpr
       { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
     | STRING ':' AssignmentExpr
       { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', String($1),yy.loc(@1)),value:$3,kind: "init"}; }
@@ -599,8 +659,7 @@ ExprNoBF
 Statement
     : Block
     | VariableStatement
-    | ConstStatement
-    | FunctionDeclarationaration
+    | FunctionDeclaration
     | EmptyStatement
     | ExprStatement
     | IfStatement
@@ -635,10 +694,29 @@ ConstDecralarionList
       { $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
     | IDENT Initializer
       { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+    | Pattern Initializer
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', $1, $2)]; }
     | ConstDecralarionList ',' IDENT
       { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
     | ConstDecralarionList ',' IDENT Initializer
       { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+    | ConstDecralarionList ',' Pattern Initializer
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', $3, $4)); }
+    ;
+
+ConstDecralarionListNoIn
+    : IDENT
+      { $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+    | IDENT InitializerNoIn
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+    | Pattern InitializerNoIn
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', $1, $2)]; }
+    | ConstDecralarionListNoIn ',' IDENT
+      { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+    | ConstDecralarionListNoIn ',' IDENT InitializerNoIn
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+    | ConstDecralarionListNoIn ',' Pattern InitializerNoIn
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', $3, $4)); }
     ;
 
 VariableStatement
@@ -653,10 +731,14 @@ VariableDeclarationList
       { $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
     | IDENT Initializer
       { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+    | Pattern Initializer
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', $1, $2)]; }
     | VariableDeclarationList ',' IDENT
       { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
     | VariableDeclarationList ',' IDENT Initializer
       { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+    | VariableDeclarationList ',' Pattern Initializer
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', $3, $4)); }
     ;
 
 VariableDeclarationListNoIn
@@ -665,12 +747,56 @@ VariableDeclarationListNoIn
     | IDENT InitializerNoIn
       { yy.locComb(@$,@2);
         $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+    | Pattern InitializerNoIn
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', $1, $2)]; }
     | VariableDeclarationListNoIn ',' IDENT
       { yy.locComb(@$,@3);
         $$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
     | VariableDeclarationListNoIn ',' IDENT InitializerNoIn
       { yy.locComb(@$,@4);
         $$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+    | VariableDeclarationListNoIn ',' Pattern InitializerNoIn
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', $3, $4)); }
+    ;
+
+LetStatement
+    : LET LetDeclarationList ';'
+      { $$ = yy.Node('VariableDeclaration',"let",$2,yy.loc([@$,@3])) }
+    | LET LetDeclarationList error
+      { $$ = yy.Node('VariableDeclaration',"let",$2,yy.loc([@$,@2])) }
+    ;
+
+LetDeclarationList
+    : IDENT
+      { $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+    | IDENT Initializer
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+    | Pattern Initializer
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', $1, $2)]; }
+    | LetDeclarationList ',' IDENT
+      { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+    | LetDeclarationList ',' IDENT Initializer
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+    | LetDeclarationList ',' Pattern Initializer
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', $3, $4)); }
+    ;
+
+LetDeclarationListNoIn
+    : IDENT
+      { $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+    | IDENT InitializerNoIn
+      { yy.locComb(@$,@2);
+        $$ = [yy.Node('InitPatt', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+    | Pattern InitializerNoIn
+      { yy.locComb(@$,@2);$$ = [yy.Node('InitPatt', $1, $2)]; }
+    | LetDeclarationListNoIn ',' IDENT
+      { yy.locComb(@$,@3);
+        $$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+    | LetDeclarationListNoIn ',' IDENT InitializerNoIn
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('InitPatt', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+    | LetDeclarationListNoIn ',' Pattern InitializerNoIn
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('InitPatt', $3, $4)); }
     ;
 
 Initializer
@@ -715,20 +841,60 @@ IterationStatement
       { $$ = yy.Node('ForStatement',
                 yy.Node('VariableDeclaration',"var", $4, yy.loc([@3,@4])),
                 $ExprOpt1, $ExprOpt2, $Statement, yy.loc([@$,@10])); }
+    | FOR '(' LET LetDeclarationListNoIn ';' ExprOpt ';' ExprOpt ')' Statement
+      { $$ = yy.Node('ForStatement',
+                yy.Node('VariableDeclaration',"let", $4, yy.loc([@3,@4])),
+                $ExprOpt1, $ExprOpt2, $Statement, yy.loc([@$,@10])); }
+    | FOR '(' CONSTTOKEN ConstDecralarionListNoIn ';' ExprOpt ';' ExprOpt ')' Statement
+      { $$ = yy.Node('ForStatement',
+                yy.Node('VariableDeclaration',"const", $4, yy.loc([@3,@4])),
+                $ExprOpt1, $ExprOpt2, $Statement, yy.loc([@$,@10])); }
     | FOR '(' LeftHandSideExpr INTOKEN Expr ')' Statement
       { $$ = yy.Node('ForInStatement', $LeftHandSideExpr, $Expr, $Statement, false, yy.loc([@$,@7])); }
-    | FOR '(' VAR IDENT INTOKEN Expr ')' Statement
-      { $$ = yy.Node('ForInStatement',
-                  yy.Node('VariableDeclaration',"var",
-                      [yy.Node('InitPatt',yy.Node('Identifier', $4,yy.loc(@4)),null)],
-                      yy.loc([@3,@4])),
-                  $Expr, $Statement, false, yy.loc([@$,@8])); }
-    | FOR '(' VAR IDENT InitializerNoIn INTOKEN Expr ')' Statement
-      { $$ = yy.Node('ForInStatement',
-                  yy.Node('VariableDeclaration',"var",
-                    [yy.Node('InitPatt',yy.Node('Identifier', $4,yy.loc(@4)), $5)],
-                    yy.loc([@3,@5])),
-                  $Expr, $Statement, false, yy.loc([@$,@9])); }
+    | FOR '(' VarOrLet Expr ')' Statement
+      { $$ = yy.Node('ForInStatement', $3,
+                  $Expr, $Statement, false, yy.loc([@$,@6])); }
+    | FOR '(' VarOrLetInitNoIn Expr ')' Statement
+      { $$ = yy.Node('ForInStatement', $3,
+                  $Expr, $Statement, false, yy.loc([@$,@6])); }
+    ;
+
+VarOrLet
+    : VAR IDENT INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"var",
+          [yy.Node('InitPatt',yy.Node('Identifier', $2,yy.loc(@2)), null)],
+          yy.loc([@1,@2])) }
+    | VAR Pattern INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"var",
+          [yy.Node('InitPatt',$2, null)],
+          yy.loc([@1,@2])) }
+    | LET IDENT INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"let",
+          [yy.Node('InitPatt',yy.Node('Identifier', $2,yy.loc(@2)), null)],
+          yy.loc([@1,@2])) }
+    | LET Pattern INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"let",
+          [yy.Node('InitPatt',$2, null)],
+          yy.loc([@1,@2])) }
+    ;
+
+VarOrLetInitNoIn
+    : VAR IDENT InitializerNoIn INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"var",
+          [yy.Node('InitPatt',yy.Node('Identifier', $2,yy.loc(@2)), $3)],
+          yy.loc([@1,@3])) }
+    | VAR Pattern InitializerNoIn INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"var",
+          [yy.Node('InitPatt',$2, $3)],
+          yy.loc([@1,@3])) }
+    | LET IDENT InitializerNoIn INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"let",
+          [yy.Node('InitPatt',yy.Node('Identifier', $2,yy.loc(@2)), $3)],
+          yy.loc([@1,@3])) }
+    | LET Pattern InitializerNoIn INTOKEN
+      { $$ = yy.Node('VariableDeclaration',"let",
+          [yy.Node('InitPatt',$2, $3)],
+          yy.loc([@1,@3])) }
     ;
 
 ExprOpt
@@ -767,9 +933,9 @@ BreakStatement
 
 ReturnStatement
     : RETURN ';'
-      { $$ = yy.Node('ReturnStatement',null,yy.loc([@$,@3])); }
+      { $$ = yy.Node('ReturnStatement',null,yy.loc([@$,@2])); }
     | RETURN error
-      { $$ = yy.Node('ReturnStatement',null,yy.loc([@$,@3])); }
+      { $$ = yy.Node('ReturnStatement',null,yy.loc(@$)); }
     | RETURN Expr ';'
       { $$ = yy.Node('ReturnStatement',$2,yy.loc([@$,@3])); }
     | RETURN Expr error
@@ -851,7 +1017,7 @@ DebuggerStatement
       { $$ = yy.Node('DebuggerStatement', yy.loc(@1)); }
     ;
 
-FunctionDeclarationaration
+FunctionDeclaration
     : FUNCTION IDENT '(' ')' Block
       { $$ = yy.Node('FunctionDeclaration',
                 yy.Node('Identifier', $2,yy.loc(@2)), [], $Block, false, false, yy.loc([@$,@5]))
@@ -883,8 +1049,12 @@ FunctionExpr
 FormalParameterList
     : IDENT
       { $$ = [yy.Node('Identifier', $1)]; }
+    | Pattern
+      { $$ = [$1]; }
     | FormalParameterList ',' IDENT
       { $$ = $1; $$.push(yy.Node('Identifier', $3,yy.loc(@3))); }
+    | FormalParameterList ',' Pattern
+      { $$ = $1; $$.push($3); }
     ;
 
 FunctionBody
@@ -901,10 +1071,15 @@ Program
     ;
 
 SourceElements
-    : Statement
+    : SourceElement
       { $$ = [$1]; }
-    | SourceElements Statement
+    | SourceElements SourceElement
       { yy.locComb(@$,@2);
       $$ = $1;$1.push($2); }
     ;
 
+SourceElement
+    : LetStatement
+    | ConstStatement
+    | Statement
+    ;
