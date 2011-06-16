@@ -2,7 +2,7 @@
   "author": "Zach Carter <zach@carter.name> (http://zaa.ch)",
   "name": "reflect",
   "description": "JavaScript parser adhering to Mozilla's parser API",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [
     "parser",
     "reflect",
@@ -13,7 +13,7 @@
     "url": "git://github.com/zaach/reflect.js.git"
   },
   "bugs": {
-    "web": "http://github.com/zaach/reflect.js/issues"
+    "url": "http://github.com/zaach/reflect.js/issues"
   },
   "main": "dist/reflect.js",
   "engines": {
@@ -30,5 +30,6 @@
     "reflect.js": "dist/reflect.js",
     "parser.js": "dist/parser.js",
     "nodes.js": "dist/nodes.js"
-  }
+  },
+  "dependencies": {}
 }
