@@ -50,43 +50,43 @@ Literal
     | STRING
       { $$ = yy.Node('Literal', yy.escapeString(String($1)), yy.loc(@1)); }
     | RegularExpressionLiteralBegin REGEXP_BODY
-      {{
+      {
         var body = yytext.slice(1,yytext.lastIndexOf('/'));
         var flags = yytext.slice(yytext.lastIndexOf('/')+1);
         $$ = yy.Node('Literal', new RegExp(body, flags), yy.loc(yy.locComb(@$,@2)));
         //$$ = yy.Node('RegExpExpression', {body:body,flags:flags});
         yy.inRegex = false;
-      }}
+      }
     ;
 
 RegularExpressionLiteralBegin
-    : '/' 
+    : '/'
       { yy.inRegex = true; yy.lexer.unput($1); $$ = $1; }
-    | DIVEQUAL 
+    | DIVEQUAL
       { yy.inRegex = true; yy.lexer.unput($1); $$ = $1; }
     ;
 
 Property
     : IdentifierName ':' AssignmentExpr
-      {{ yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }}
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
     | STRING ':' AssignmentExpr
-      {{ yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', String($1),yy.loc(@1)),value:$3,kind: "init"}; }}
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', String($1),yy.loc(@1)),value:$3,kind: "init"}; }
     | NUMBER ':' AssignmentExpr
-      {{ yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', Number($1),yy.loc(@1)),value:$3,kind: "init"}; }}
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', Number($1),yy.loc(@1)),value:$3,kind: "init"}; }
     | IDENT IdentifierName '(' ')' Block
-      {{ 
+      {
           if ($1 !== 'get' && $1 !== 'set') throw new Error('Parse error, invalid set/get.'); // TODO: use jison ABORT when supported
           @$ = yy.locComb(@1,@5);
           var fun = yy.Node('FunctionExpression',null,[],$Block, false, false, yy.loc(@$));
           $$ = {key:yy.Node('Identifier', $2,yy.loc(@2)),value:fun,kind: $1};
-      }}
+      }
     | IDENT IdentifierName '(' FormalParameterList ')' Block
-      {{ 
+      {
           @$ = yy.locComb(@1,@6);
           if ($1 !== 'get' && $1 !== 'set') throw new Error('Parse error, invalid set/get.'); // TODO: use jison ABORT when supported
           var fun = yy.Node('FunctionExpression',null,$FormalParameterList,$Block,false,false,yy.loc(@$));
           $$ = {key:yy.Node('Identifier', $2,yy.loc(@2)),value:fun,kind: $1};
-      }}
+      }
     ;
 
 PropertyList
@@ -138,7 +138,7 @@ ElementList
     ;
 
 ElisionOpt
-    : 
+    :
       { $$ = []; }
     | Elision
     ;
@@ -560,40 +560,40 @@ AssignmentOperator
 Expr
     : AssignmentExpr
     | Expr ',' AssignmentExpr
-      {{
+      {
         if ($1.type == 'SequenceExpression') {
           $1.expressions.push($3);
           $1.loc = yy.loc([@$,@3]);
           $$ = $1;
         } else
           $$ = yy.Node('SequenceExpression',[$1, $3],yy.loc([@$,@3]));
-      }}
+      }
     ;
 
 ExprNoIn
     : AssignmentExprNoIn
     | ExprNoIn ',' AssignmentExprNoIn
-      {{
+      {
         if ($1.type == 'SequenceExpression') {
           $1.expressions.push($3);
           $1.loc = yy.loc([@$,@3]);
           $$ = $1;
         } else
           $$ = yy.Node('SequenceExpression',[$1, $3],yy.loc([@$,@3]));
-      }}
+      }
     ;
 
 ExprNoBF
     : AssignmentExprNoBF
     | ExprNoBF ',' AssignmentExpr
-      {{
+      {
         if ($1.type == 'SequenceExpression') {
           $1.expressions.push($3);
           $1.loc = yy.loc([@$,@3]);
           $$ = $1;
         } else
           $$ = yy.Node('SequenceExpression',[$1, $3],yy.loc([@$,@3]));
-      }}
+      }
     ;
 
 Statement
@@ -732,13 +732,13 @@ IterationStatement
     ;
 
 ExprOpt
-    : 
+    :
       { $$ = null }
     | Expr
     ;
 
 ExprNoInOpt
-    : 
+    :
       { $$ = null }
     | ExprNoIn
     ;
@@ -794,7 +794,7 @@ CaseBlock
     ;
 
 CaseClausesOpt
-    : 
+    :
       { $$ = []; }
     | CaseClauses
     ;
@@ -888,7 +888,7 @@ FormalParameterList
     ;
 
 FunctionBody
-    : 
+    :
       { $$ = []; }
     | SourceElements
     ;
@@ -904,7 +904,7 @@ SourceElements
     : Statement
       { $$ = [$1]; }
     | SourceElements Statement
-      { yy.locComb(@$,@2); 
+      { yy.locComb(@$,@2);
       $$ = $1;$1.push($2); }
     ;
 
