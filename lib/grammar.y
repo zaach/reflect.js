@@ -68,6 +68,7 @@ Keyword
     | BREAK
     | CASE
     | CATCH
+    | CONSTTOKEN
     | CONTINUE
     | DEBUGGER
     | DEFAULT
@@ -80,6 +81,7 @@ Keyword
     | IF
     | INTOKEN
     | INSTANCEOF
+    | LET
     | NEW
     | RETURN
     | SWITCH
@@ -88,7 +90,6 @@ Keyword
     | TRY
     | TYPEOF
     | VAR
-    | LET
     | VOIDTOKEN
     | WHILE
     | WITH
