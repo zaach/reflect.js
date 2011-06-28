@@ -639,6 +639,7 @@ assertDecl("function f(a,b,c) { function b() { } }",
 
 
 // expressions
+assertStmt("{(/[]/,']');/1/}", blockStmt([exprStmt(seqExpr([lit(/[]/),lit("]")])),exprStmt(lit(/1/))]));
 
 assertExpr("true", lit(true));
 assertExpr("false", lit(false));
