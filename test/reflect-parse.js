@@ -638,6 +638,7 @@ assertDecl("function f(a,b,c) { function b() { } }",
 //                    blockStmt([funDecl(ident("b"), [], blockStmt([]))])));
 
 
+program([]).assert(Reflect.parse(""));
 // expressions
 assertStmt("{(/[]/,']');/1/}", blockStmt([exprStmt(seqExpr([lit(/[]/),lit("]")])),exprStmt(lit(/1/))]));
 

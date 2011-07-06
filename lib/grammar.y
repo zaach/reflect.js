@@ -1066,7 +1066,7 @@ FunctionBody
 
 Program
     :
-      { return yy.Node('Program'); }
+      { return yy.Node('Program',[],yy.loc(@$)); }
     | SourceElements
       { return yy.Node('Program',$1,yy.loc(@1)); }
     ;
