@@ -47,6 +47,10 @@ Field
       { $$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:yy.Node('Identifier', $1,yy.loc(@1)),kind: "init"}; }
     | IDENT ':' Element
       { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
+    | STRING ':' Element
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', String($1),yy.loc(@1)),value:$3,kind: "init"}; }
+    | NUMBER ':' Element
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', Number($1),yy.loc(@1)),value:$3,kind: "init"}; }
     ;
 
 Element
