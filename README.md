@@ -8,7 +8,7 @@ Parsing large files can be slow, for reasons [articulated](http://www.andychu.ne
 
 Download
 ========
-You can download a standalone version of reflect.js to embed in web pages [here](https://github.com/downloads/zaach/reflect.js/standalone-0.0.1.zip).
+You can download a minified-standalone version of reflect.js to embed in web pages [here](https://raw.github.com/zaach/reflect.js/master/standalone/reflect.js).
 
 Install
 =======
