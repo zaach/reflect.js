@@ -308,23 +308,23 @@ PostfixExprNoBF
 
 UnaryExprCommon
     : DELETETOKEN UnaryExpr
-      { $$ = yy.Node('UnaryExpression','delete',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','delete',$2,true,yy.loc([@$,@2])); }
     | VOIDTOKEN UnaryExpr
-      { $$ = yy.Node('UnaryExpression','void',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','void',$2,true,yy.loc([@$,@2])); }
     | TYPEOF UnaryExpr
-      { $$ = yy.Node('UnaryExpression','typeof',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','typeof',$2,true,yy.loc([@$,@2])); }
     | PLUSPLUS UnaryExpr
       { $$ = yy.Node('UpdateExpression','++',$2,true,yy.loc([@$,@2])); }
     | MINUSMINUS UnaryExpr
       { $$ = yy.Node('UpdateExpression','--',$2,true,yy.loc([@$,@2])); }
     | '+' UnaryExpr
-      { $$ = yy.Node('UnaryExpression','+',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','+',$2,true,yy.loc([@$,@2])); }
     | '-' UnaryExpr
-      { $$ = yy.Node('UnaryExpression','-',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','-',$2,true,yy.loc([@$,@2])); }
     | '~' UnaryExpr
-      { $$ = yy.Node('UnaryExpression','~',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','~',$2,true,yy.loc([@$,@2])); }
     | '!' UnaryExpr
-      { $$ = yy.Node('UnaryExpression','!',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('UnaryExpression','!',$2,true,yy.loc([@$,@2])); }
     ;
 
 UnaryExpr
