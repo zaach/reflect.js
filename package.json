@@ -2,7 +2,7 @@
   "author": "Zach Carter <zach@carter.name> (http://zaa.ch)",
   "name": "reflect",
   "description": "JavaScript parser adhering to Mozilla's parser API",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "keywords": [
     "parser",
     "reflect",
