@@ -26,10 +26,5 @@
   "scripts": {
     "test": "node test/reflect-parse.js"
   },
-  "modules": {
-    "reflect.js": "dist/reflect.js",
-    "parser.js": "dist/parser.js",
-    "nodes.js": "dist/nodes.js"
-  },
   "dependencies": {}
 }
