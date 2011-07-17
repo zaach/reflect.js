@@ -19,9 +19,12 @@ function normalizeModules (mods, path) {
 }
 
 function generate (path) {
-    var pkg = loadPackage(path),
-        modules = normalizeModules(pkg.modules, path),
-        script = bundler.bundle(modules);
+    var modules = {
+          "reflect.js": "dist/reflect.js",
+          "parser.js": "dist/parser.js",
+          "nodes.js": "dist/nodes.js"
+        };
+    var script = bundler.bundle(normalizeModules(modules, path));
 
     var out = "var Reflect = (function() {\n" + script + ";\nreturn require('reflect').Reflect;\n})();";
     require("sys").puts(out);
