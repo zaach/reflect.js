@@ -8,7 +8,7 @@ move: lib
 	cp lib/*.js dist/
 
 test: move dist
-	node test/reflect-parse.js
+	node test/all-tests.js
 
 standalone: move dist
 	node scripts/standalone.js | uglifyjs > standalone/reflect.js

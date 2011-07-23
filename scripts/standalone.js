@@ -22,6 +22,7 @@ function generate (path) {
     var modules = {
           "reflect.js": "dist/reflect.js",
           "parser.js": "dist/parser.js",
+          "stringify.js": "dist/stringify.js",
           "nodes.js": "dist/nodes.js"
         };
     var script = bundler.bundle(normalizeModules(modules, path));

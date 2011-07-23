@@ -5,6 +5,7 @@
   "version": "0.0.5",
   "keywords": [
     "parser",
+    "ast",
     "reflect",
     "javascript"
   ],
@@ -24,7 +25,7 @@
     "uglify-js": "*"
   },
   "scripts": {
-    "test": "node test/reflect-parse.js"
+    "test": "node test/all-tests.js"
   },
   "dependencies": {}
 }
