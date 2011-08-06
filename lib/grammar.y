@@ -245,6 +245,15 @@ MemberExpr
       { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3)),false,yy.loc([@$,@3])); }
     | NEW MemberExpr Arguments
       { $$ = yy.Node('NewExpression',$MemberExpr,$Arguments,yy.loc([@$,@3])); }
+    | MemberExpr '.' ObjectLiteral
+      { $$ = yy.Node('MemberExpression',$1,$3,false,yy.loc([@$,@3])); }
+    ;
+
+ObjectLiteral
+    : OPENBRACE PropertyList CLOSEBRACE
+      { $$ = yy.Node('ObjectExpression',$2,yy.loc([@$,@3])); }
+    | OPENBRACE PropertyList ',' CLOSEBRACE
+      { $$ = yy.Node('ObjectExpression',$2,yy.loc([@$,@4])); }
     ;
 
 MemberExprNoBF
@@ -255,6 +264,8 @@ MemberExprNoBF
       { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3)),false,yy.loc([@$,@3])); }
     | NEW MemberExpr Arguments
       { $$ = yy.Node('NewExpression',$MemberExpr,$Arguments,yy.loc([@$,@3])); }
+    | MemberExprNoBF '.' ObjectLiteral
+      { $$ = yy.Node('MemberExpression',$1,$3,false,yy.loc([@$,@3])); }
     ;
 
 NewExpr

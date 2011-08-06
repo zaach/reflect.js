@@ -27,5 +27,8 @@
   "scripts": {
     "test": "node test/all-tests.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "JSONSelect": "*"
+    "reflect-tree-builder": "*"
+  }
 }
