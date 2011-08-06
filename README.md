@@ -39,7 +39,7 @@ The reflect.js module exports the [default builder](https://raw.github.com/zaach
     // redefine callback for variable declarations
     builder["variableDeclaration"] = function (kind, declarators, loc) { ... };
 
-    var ast = Reflect.parse("var a = 4 + 7", builder);
+    var ast = Reflect.parse("var a = 4 + 7", {builder: builder});
 
 License
 =======
