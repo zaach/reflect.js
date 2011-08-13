@@ -10,9 +10,6 @@ var ast = Reflect.parse(source, {builder: b});
 
 transform(ast, b);
 
-//console.log(ast.body[0].type);
-console.log(ast.body[0].toSource('b', ''));
-
 console.log(Reflect.stringify(ast));
 
 // To be part of ECMAScript.next

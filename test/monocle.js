@@ -1,9 +1,3 @@
-//Object.getOwnPropertyDescriptor(__Super__, "name").get ? Object.getOwnPropertyDescriptor(__Super__, "name").get.call(__Super__) : this.name;
-//(function (__Super__) {
-  //var __Extender__ = __Super__;
-  //__Super__ = Object.getPrototypeOf(__Super__);
-  //return sub;
-//}(sup));
 
 var assert = require("assert");
 var a = {};
