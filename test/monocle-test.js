@@ -1,6 +1,6 @@
 var fs = require("fs");
 var path = require("path");
-var source = fs.readFileSync(path.resolve(path.join(__dirname, "monocle.js")), "utf8");
+var source = read(path.join(__dirname, "monocle.js"));
 
 var Reflect = require("../dist/reflect");
 var b = require("reflect-tree-builder");
@@ -10,48 +10,12 @@ var ast = Reflect.parse(source, {builder: b});
 
 transform(ast, b);
 
-console.log(Reflect.stringify(ast));
+var newSource = Reflect.stringify(ast);
+console.log(newSource);
 
-// To be part of ECMAScript.next
-if (!Object.getOwnPropertyDescriptors) {
-    Object.getOwnPropertyDescriptors = function (obj) {
-        var descriptors = {};
-        Object.getOwnPropertyNames(obj).forEach(function (prop) {
-            descriptors[prop] = Object.getOwnPropertyDescriptor(obj, prop);
-            });
-        return descriptors;
-    };
-}
-
-function extend (a, b) {
-    Object.defineProperties(a, Object.getOwnPropertyDescriptors(b));
-    return a;
-};
-
-function prototypeFor (proto, obj) {
-    obj.__proto__ = proto;
-    if (typeof obj === "function") {
-        obj.prototype = {
-            __proto__: proto.prototype,
-            constructor: obj
-        };
-    }
-    return obj;
-};
-
-function __get (sup, prop, that) {
-    var desc = Object.getOwnPropertyDescriptor(sup, prop);
-    return desc.get ?
-        desc.get.call(that) :
-        desc.value;
-}
-
-function __set (sup, prop, that, val) {
-    var desc = Object.getOwnPropertyDescriptor(sup, prop);
-    return desc.get ?
-        desc.set.call(that, val) :
-        that[prop] = val;
-}
+var target = read(path.join(__dirname,'..','dist','es6.js')) +
+             newSource +
+             read(path.join(__dirname,'..','dist','append.js'));
 
 //var Script=process.binding('evals').Script; 
 //var js = "var a=0;\nvarb=1;\nthrow new Error('lol');"; 
@@ -63,5 +27,8 @@ function __set (sup, prop, that, val) {
   //console.log(err.stack); 
 /*} */
 
-eval(Reflect.stringify(ast));
+eval(target);
 
+function read (path) {
+    return require('fs').readFileSync(require('path').resolve(path), "utf8");
+}

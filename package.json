@@ -1,7 +1,7 @@
 {
   "author": "Zach Carter <zach@carter.name> (http://zaa.ch)",
-  "name": "reflect",
-  "description": "JavaScript parser adhering to Mozilla's parser API",
+  "name": "reflect-next",
+  "description": "Experimental ES.next parser adhering to Mozilla's parser API",
   "version": "0.0.6",
   "keywords": [
     "parser",
@@ -11,12 +11,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/zaach/reflect.js.git"
+    "url": "git://github.com/zaach/reflect.js.git/tree/es-next"
   },
   "bugs": {
     "url": "http://github.com/zaach/reflect.js/issues"
   },
   "main": "dist/reflect.js",
+  "bin": {"reflect-next": "dist/cli.js"},
   "engines": {
     "node": "0.4 || 0.5"
   },
@@ -28,7 +29,7 @@
     "test": "node test/all-tests.js"
   },
   "dependencies": {
-    "JSONSelect": "*"
-    "reflect-tree-builder": "*"
+    "JSONSelect": "*",
+    "reflect-tree-builder": ">= 0.0.2"
   }
 }
