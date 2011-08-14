@@ -6,6 +6,7 @@ build: move
 
 move: lib
 	cp lib/*.js dist/
+	cp -r lib/append dist/
 
 test: move dist
 	node test/all-tests.js
