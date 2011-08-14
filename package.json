@@ -2,7 +2,7 @@
   "author": "Zach Carter <zach@carter.name> (http://zaa.ch)",
   "name": "reflect-next",
   "description": "Experimental ES.next parser adhering to Mozilla's parser API",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "keywords": [
     "parser",
     "ast",
