@@ -17,6 +17,6 @@ Install
 
 CLI
 ==
-    reflect-next test/monocle.js
+    reflect-next example/person.js > compiled.js
+    node compiled.js
 
-will compile the file and send the output to `stdout`.
