@@ -249,10 +249,15 @@ MemberExpr
       { $$ = yy.Node('NewExpression',$MemberExpr,$Arguments,yy.loc([@$,@3])); }
     | MemberExpr '.' ObjectLiteral
       { $$ = yy.Node('MemberExpression',$1,$3,false,yy.loc([@$,@3])); }
-    | MemberExpr PROTOTYPEFOR ObjectLiteral
+    | MemberExpr PROTOTYPEFOR ProtoLiteral
       { $$ = yy.Node('PrototypeForExpression',$1,$3,yy.loc([@$,@3])); }
-    | MemberExpr PROTOTYPEFOR FunctionExpr
-      { $$ = yy.Node('PrototypeForExpression',$1,$3,yy.loc([@$,@3])); }
+    ;
+
+ProtoLiteral
+    : ObjectLiteral
+    | ArrayLiteral
+    | Literal
+    | FunctionExpr
     ;
 
 ObjectLiteral
@@ -272,9 +277,7 @@ MemberExprNoBF
       { $$ = yy.Node('NewExpression',$MemberExpr,$Arguments,yy.loc([@$,@3])); }
     | MemberExprNoBF '.' ObjectLiteral
       { $$ = yy.Node('MemberExpression',$1,$3,false,yy.loc([@$,@3])); }
-    | MemberExprNoBF PROTOTYPEFOR ObjectLiteral
-      { $$ = yy.Node('PrototypeForExpression',$1,$3,yy.loc([@$,@3])); }
-    | MemberExprNoBF PROTOTYPEFOR FunctionExpr
+    | MemberExprNoBF PROTOTYPEFOR ProtoLiteral
       { $$ = yy.Node('PrototypeForExpression',$1,$3,yy.loc([@$,@3])); }
     ;
 

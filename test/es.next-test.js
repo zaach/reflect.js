@@ -11,7 +11,7 @@ var ast = Reflect.parse(source, {builder: b});
 var dependencies = transform(ast, b);
 
 var newSource = Reflect.stringify(ast);
-console.log(newSource);
+//console.log(newSource);
 
 var target = read(path.join(__dirname, "..", "dist", "es6.js")) +
              newSource;
@@ -30,6 +30,7 @@ Object.keys(dependencies).forEach(function (dep) {
   //console.log(err.stack); 
 /*} */
 
+console.log(target);
 eval(target);
 
 function read (path) {

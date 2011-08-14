@@ -105,3 +105,9 @@ assert.equal(sup3.f, 2);
 assert.equal(sub3.f, 2);
 assert.equal(sub3.ff);
 
+var arr = {} <| [0,1,2,3,4,5];
+var p = {foo: "bar"} <| /[a-m][3-7]/;
+
+assert.equal(arr.length, 6);
+assert.equal(p.foo, "bar");
+
