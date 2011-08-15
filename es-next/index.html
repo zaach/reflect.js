@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+
+  <title>Experimental ES.next Transpiler</title>
+
+  <style type="text/css">
+    body {
+      margin-top: 1.0em;
+      background-color: #ffffff;
+      font-family: "Helvetica Neue", Arial, FreeSans, san-serif;
+      font-weight: 300;
+      color: #000000;
+    }
+    #container {
+      margin: 0 auto;
+      width: 700px;
+    }
+    h1 { font-size: 2.8em; color: #000000; margin-bottom: 3px; font-weight: 300; }
+    h1 .small { font-size: 0.4em; }
+    h1 a { text-decoration: none }
+    h2 { font-size: 1.5em; color: #000000; }
+    h3 { text-align: center; color: #000000; }
+    a { color: #000000; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+    .download { float: right; }
+    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+    .footer { text-align:center; padding-top:30px; font-style: italic; }
+    textarea { width: 100%; font-size: 1em; font-family: monospace; }
+    pre { padding: 9px 9px 9px 9px; font-family: monospace; color: #839496; background-color: #002b36; }
+    .lnr { padding-left: 9px; color: #586e75; background-color: #073642; }
+    .Comment { color: #586e75; font-style: italic; }
+    .Type { color: #b58900; }
+    .Identifier { color: #268bd2; }
+    .Special { color: #dc322f; }
+    .Statement { color: #719e07; }
+  </style>
+  <script src="bundle.min.js"></script>
+</head>
+
+<body>
+  <a href="http://github.com/zaach/reflect.js/tree/es-next"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+    <h1>Experimental ES.next transpiler</h1>
+    <p>Try using <|, .{, and super.</p>
+    <textarea id="source" rows="18">
+var sup = {
+  method: function () {
+    return "sup";
+  }
+};
+
+var sub = sup <| {
+  method: function () {
+    return super.method()+"sub";
+  }
+};
+
+assert.equal(Object.getPrototypeOf(sub), sup);
+assert.equal(sub.method(), "supsub");
+
+sub.{
+  extended: true,
+  again: true
+};
+
+assert.equal(sub.extended, true);
+assert.equal(sub.again, true);
+
+function A () { this.init = "A"; }
+A.prototype.{
+  method: function () { return "blah"; }
+};
+
+var B = A <|
+  function () {
+    super.constructor();
+    this.initB = "B";
+  }.prototype.{
+    method: function () {
+      return super.method() + " blah";
+    }
+  }.constructor;
+
+var b = new B;
+
+assert.equal(b.init, "A");
+assert.equal(b.initB, "B");
+assert.equal(Object.getPrototypeOf(b), B.prototype);
+assert.equal(Object.getPrototypeOf(B), A);
+assert.equal(Object.getPrototypeOf(Object.getPrototypeOf(b)), A.prototype);
+assert.equal(b.method(), "blah blah");
+    </textarea>
+    <button id="compile" onclick="compile()">Compile</button>
+    <button id="run" onclick="run()">Run</button>
+    <textarea id="result" rows="18"></textarea>
+    <p>These utility functions are used in the translated version:</p>
+<pre>
+<span class="lnr"> 1 </span><span class="Statement">if</span> (<span class="">!</span><span class="Special">Object</span><span class="">.getOwnPropertyDescriptors) </span>{
+<span class="lnr"> 2 </span>    <span class="Special">Object</span><span class="">.getOwnPropertyDescriptors = </span><span class="Identifier">function</span> (obj)<span class=""> </span>{
+<span class="lnr"> 3 </span>        <span class="Type">var</span><span class="javaScriptFuncBlock"> descriptors = </span>{<span class="javaScriptFuncBlock">};</span>
+<span class="lnr"> 4 </span>        <span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyNames</span>(<span class="javaScriptFuncBlock">obj).forEach</span><span class="javaScriptParen">(</span><span class="Identifier">function</span> (prop)<span class="javaScriptFuncBlock"> {</span>
+<span class="lnr"> 5 </span>            descriptors[<span class="javaScriptFuncBlock">prop] = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">obj, prop);</span>
+<span class="lnr"> 6 </span>            });
+<span class="lnr"> 7 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> descriptors;</span>
+<span class="lnr"> 8 </span>    };
+<span class="lnr"> 9 </span>}
+<span class="lnr">10 </span>
+<span class="lnr">11 </span><span class="Comment">// .{ extend operator</span>
+<span class="lnr">12 </span><span class="Identifier">function</span> __extend (a, b)<span class=""> </span>{
+<span class="lnr">13 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.defineProperties</span>(<span class="javaScriptFuncBlock">a, </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptors</span><span class="javaScriptParen">(</span><span class="javaScriptFuncBlock">b));</span>
+<span class="lnr">14 </span>}
+<span class="lnr">15 </span>
+<span class="lnr">16 </span><span class="Comment">// proto &lt;| {}</span>
+<span class="lnr">17 </span><span class="Identifier">function</span> __prototypeForObject (proto, obj)<span class=""> </span>{
+<span class="lnr">18 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.create</span>(<span class="javaScriptFuncBlock">proto, </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptors</span><span class="javaScriptParen">(</span><span class="javaScriptFuncBlock">obj));</span>
+<span class="lnr">19 </span>}
+<span class="lnr">20 </span>
+<span class="lnr">21 </span><span class="Comment">// proto &lt;| function () {}</span>
+<span class="lnr">22 </span><span class="Identifier">function</span> __prototypeForFunction (proto, obj)<span class=""> </span>{
+<span class="lnr">23 </span>    obj.__proto__ = proto;
+<span class="lnr">24 </span>    obj.prototype = {
+<span class="lnr">25 </span>        <span class="Statement">__proto__</span><span class="javaScriptFuncBlock">: proto.prototype,</span>
+<span class="lnr">26 </span>        <span class="Statement">constructor</span><span class="javaScriptFuncBlock">: obj</span>
+<span class="lnr">27 </span>    };
+<span class="lnr">28 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
+<span class="lnr">29 </span>}
+<span class="lnr">30 </span>
+<span class="lnr">31 </span><span class="Comment">// proto &lt;| [], /^/, and other literals</span>
+<span class="lnr">32 </span><span class="Identifier">function</span> __prototypeForLiteral (proto, obj)<span class=""> </span>{
+<span class="lnr">33 </span>    obj.__proto__ = proto;
+<span class="lnr">34 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
+<span class="lnr">35 </span>}
+<span class="lnr">36 </span>
+<span class="lnr">37 </span><span class="Comment">// perform a get on a super data property or accessor</span>
+<span class="lnr">38 </span><span class="Identifier">function</span> __get (sup, prop, that)<span class=""> </span>{
+<span class="lnr">39 </span>    <span class="Type">var</span><span class="javaScriptFuncBlock"> desc = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">sup, prop);</span>
+<span class="lnr">40 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> desc.get ?</span>
+<span class="lnr">41 </span>        desc.get.call(<span class="javaScriptFuncBlock">that) :</span>
+<span class="lnr">42 </span>        desc.value;
+<span class="lnr">43 </span>}
+<span class="lnr">44 </span>
+<span class="lnr">45 </span><span class="Comment">// perform a set using a super accessor or set data property of `this`</span>
+<span class="lnr">46 </span><span class="Identifier">function</span> __set (sup, prop, that, val)<span class=""> </span>{
+<span class="lnr">47 </span>    <span class="Type">var</span><span class="javaScriptFuncBlock"> desc = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">sup, prop);</span>
+<span class="lnr">48 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> desc.get ?</span>
+<span class="lnr">49 </span>        desc.set.call(<span class="javaScriptFuncBlock">that, val) :</span>
+<span class="lnr">50 </span>        that[<span class="javaScriptFuncBlock">prop] = val;</span>
+<span class="lnr">51 </span>}
+<span class="lnr">52 </span>
+</pre>
+    <p>
+    There's also a command-line version:
+    </p>
+    <pre>npm install reflect-next</pre>
+    <p>
+    Use:
+    </p>
+    <pre>reflect-next examples/person.js</pre>
+
+    <div class="footer">
+      get the source code on GitHub : <a href="http://github.com/zaach/reflect.js/tree/es-next">zaach/reflect.js</a>
+    </div>
+
+    <script>
+    var reflect = require('./reflect');
+    var assert = require('assert');
+
+    function compile () {
+        try {
+            var res = reflect.compile(document.getElementById("source").value);
+            return document.getElementById("result").value = res;
+        } catch (e) {
+            alert("Compile Error\n\n"+e);
+            return '';
+        }
+    }
+    function run () {
+        eval(compile());
+    }
+
+    if (!Object.getOwnPropertyDescriptors) {
+        Object.getOwnPropertyDescriptors = function (obj) {
+            var descriptors = {};
+            Object.getOwnPropertyNames(obj).forEach(function (prop) {
+                descriptors[prop] = Object.getOwnPropertyDescriptor(obj, prop);
+                });
+            return descriptors;
+        };
+    }
+
+    function __extend (a, b) {
+        return Object.defineProperties(a, Object.getOwnPropertyDescriptors(b));
+    }
+    function __prototypeForObject (proto, obj) {
+        return Object.create(proto, Object.getOwnPropertyDescriptors(obj));
+    }
+    function __prototypeForFunction (proto, obj) {
+        obj.__proto__ = proto;
+        obj.prototype = {
+            __proto__: proto.prototype,
+            constructor: obj
+        };
+        return obj;
+    }
+    function __get (sup, prop, that) {
+        var desc = Object.getOwnPropertyDescriptor(sup, prop);
+        return desc.get ?
+            desc.get.call(that) :
+            desc.value;
+    }
+    function __set (sup, prop, that, val) {
+        var desc = Object.getOwnPropertyDescriptor(sup, prop);
+        return desc.get ?
+            desc.set.call(that, val) :
+            that[prop] = val;
+    }
+    function __prototypeForLiteral (proto, obj) {
+        obj.__proto__ = proto;
+        return obj;
+    }
+
+    </script>
+  </div>
+
+</body>
+</html>
