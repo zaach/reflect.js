@@ -92,6 +92,9 @@ assert.equal(Object.getPrototypeOf(b), B.prototype);
 assert.equal(Object.getPrototypeOf(B), A);
 assert.equal(Object.getPrototypeOf(Object.getPrototypeOf(b)), A.prototype);
 assert.equal(b.method(), "blah blah");
+
+console.log(b);
+console.log("Done.");
     </textarea>
     <button id="compile" onclick="compile()">Compile</button>
     <button id="run" onclick="run()">Run</button>
