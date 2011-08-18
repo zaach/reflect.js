@@ -111,3 +111,22 @@ var p = {foo: "bar"} <| /[a-m][3-7]/;
 assert.equal(arr.length, 6);
 assert.equal(p.foo, "bar");
 
+
+var obj = {foo: 5} <| {
+  method: function () {
+    return super.foo;
+  }
+};
+
+assert.equal(obj.method(), 5);
+
+var o2 = {foo: 42} <| {bar: "baz"};
+
+Object.defineMethod(o2, "newMethod", obj.method);
+
+assert.equal(o2.newMethod(), 42);
+
+var fun = function () { return super.foo; };
+
+Object.defineMethod(obj, "fun", fun);
+assert.equal(obj.fun(), 5);
