@@ -101,58 +101,57 @@ console.log("Done.");
     <textarea id="result" rows="18"></textarea>
     <p>These utility functions are used in the translated version:</p>
 <pre>
-<span class="lnr"> 1 </span><span class="Statement">if</span> (<span class="">!</span><span class="Special">Object</span><span class="">.getOwnPropertyDescriptors) </span>{
-<span class="lnr"> 2 </span>    <span class="Special">Object</span><span class="">.getOwnPropertyDescriptors = </span><span class="Identifier">function</span> (obj)<span class=""> </span>{
-<span class="lnr"> 3 </span>        <span class="Type">var</span><span class="javaScriptFuncBlock"> descriptors = </span>{<span class="javaScriptFuncBlock">};</span>
-<span class="lnr"> 4 </span>        <span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyNames</span>(<span class="javaScriptFuncBlock">obj).forEach</span><span class="javaScriptParen">(</span><span class="Identifier">function</span> (prop)<span class="javaScriptFuncBlock"> {</span>
-<span class="lnr"> 5 </span>            descriptors[<span class="javaScriptFuncBlock">prop] = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">obj, prop);</span>
-<span class="lnr"> 6 </span>            });
-<span class="lnr"> 7 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> descriptors;</span>
-<span class="lnr"> 8 </span>    };
-<span class="lnr"> 9 </span>}
-<span class="lnr">10 </span>
-<span class="lnr">11 </span><span class="Comment">// .{ extend operator</span>
-<span class="lnr">12 </span><span class="Identifier">function</span> __extend (a, b)<span class=""> </span>{
-<span class="lnr">13 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.defineProperties</span>(<span class="javaScriptFuncBlock">a, </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptors</span><span class="javaScriptParen">(</span><span class="javaScriptFuncBlock">b));</span>
-<span class="lnr">14 </span>}
-<span class="lnr">15 </span>
-<span class="lnr">16 </span><span class="Comment">// proto &lt;| {}</span>
-<span class="lnr">17 </span><span class="Identifier">function</span> __prototypeForObject (proto, obj)<span class=""> </span>{
-<span class="lnr">18 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.create</span>(<span class="javaScriptFuncBlock">proto, </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptors</span><span class="javaScriptParen">(</span><span class="javaScriptFuncBlock">obj));</span>
-<span class="lnr">19 </span>}
+<span class="lnr"> 1 </span>    <span class="Statement">if</span><span class=""> </span>(<span class="">!</span><span class="Special">Object</span><span class="">.getOwnPropertyDescriptors) </span>{
+<span class="lnr"> 2 </span>        <span class="Special">Object</span><span class="">.getOwnPropertyDescriptors = </span><span class="Identifier">function</span> (obj)<span class=""> </span>{
+<span class="lnr"> 3 </span>            <span class="Type">var</span><span class="javaScriptFuncBlock"> descriptors = </span>{<span class="javaScriptFuncBlock">};</span>
+<span class="lnr"> 4 </span>            <span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyNames</span>(<span class="javaScriptFuncBlock">obj).forEach</span><span class="javaScriptParen">(</span><span class="Identifier">function</span> (prop)<span class="javaScriptFuncBlock"> {</span>
+<span class="lnr"> 5 </span>                descriptors[<span class="javaScriptFuncBlock">prop] = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">obj, prop);</span>
+<span class="lnr"> 6 </span>                });
+<span class="lnr"> 7 </span>            <span class="Statement">return</span><span class="javaScriptFuncBlock"> descriptors;</span>
+<span class="lnr"> 8 </span>        };
+<span class="lnr"> 9 </span>    }
+<span class="lnr">10 </span>    <span class="Type">var</span><span class=""> __DMP__ </span>=<span class=""> </span><span class="Constant">&quot;__DEFMETHPROP__&quot;</span><span class="">;</span>
+<span class="lnr">11 </span>    <span class="Special">Object</span><span class="">.defineMethod </span>=<span class=""> </span><span class="Identifier">function</span> (obj, name, method)<span class=""> </span>{
+<span class="lnr">12 </span>        <span class="Statement">if</span><span class="javaScriptFuncBlock"> </span>(<span class="javaScriptFuncBlock">__DMP__ </span><span class="Statement">in</span><span class="javaScriptFuncBlock"> method) </span>{
+<span class="lnr">13 </span>            <span class="Type">var</span><span class="javaScriptFuncBlock"> proto = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getPrototypeOf</span>(<span class="javaScriptFuncBlock">obj);</span>
+<span class="lnr">14 </span>            obj[<span class="javaScriptFuncBlock">name] = method</span><span class="javaScriptBracket">[</span><span class="javaScriptFuncBlock">__DMP__]</span>(<span class="javaScriptFuncBlock">proto);</span>
+<span class="lnr">15 </span>        } <span class="Statement">else</span><span class="javaScriptFuncBlock"> </span>{
+<span class="lnr">16 </span>            obj[<span class="javaScriptFuncBlock">name] = method;</span>
+<span class="lnr">17 </span>        }
+<span class="lnr">18 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
+<span class="lnr">19 </span>    };
 <span class="lnr">20 </span>
-<span class="lnr">21 </span><span class="Comment">// proto &lt;| function () {}</span>
-<span class="lnr">22 </span><span class="Identifier">function</span> __prototypeForFunction (proto, obj)<span class=""> </span>{
-<span class="lnr">23 </span>    obj.__proto__ = proto;
-<span class="lnr">24 </span>    obj.prototype = {
-<span class="lnr">25 </span>        <span class="Statement">__proto__</span><span class="javaScriptFuncBlock">: proto.prototype,</span>
-<span class="lnr">26 </span>        <span class="Statement">constructor</span><span class="javaScriptFuncBlock">: obj</span>
-<span class="lnr">27 </span>    };
-<span class="lnr">28 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
-<span class="lnr">29 </span>}
-<span class="lnr">30 </span>
-<span class="lnr">31 </span><span class="Comment">// proto &lt;| [], /^/, and other literals</span>
-<span class="lnr">32 </span><span class="Identifier">function</span> __prototypeForLiteral (proto, obj)<span class=""> </span>{
-<span class="lnr">33 </span>    obj.__proto__ = proto;
-<span class="lnr">34 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
-<span class="lnr">35 </span>}
-<span class="lnr">36 </span>
-<span class="lnr">37 </span><span class="Comment">// perform a get on a super data property or accessor</span>
-<span class="lnr">38 </span><span class="Identifier">function</span> __get (sup, prop, that)<span class=""> </span>{
-<span class="lnr">39 </span>    <span class="Type">var</span><span class="javaScriptFuncBlock"> desc = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">sup, prop);</span>
-<span class="lnr">40 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> desc.get ?</span>
-<span class="lnr">41 </span>        desc.get.call(<span class="javaScriptFuncBlock">that) :</span>
-<span class="lnr">42 </span>        desc.value;
-<span class="lnr">43 </span>}
-<span class="lnr">44 </span>
-<span class="lnr">45 </span><span class="Comment">// perform a set using a super accessor or set data property of `this`</span>
-<span class="lnr">46 </span><span class="Identifier">function</span> __set (sup, prop, that, val)<span class=""> </span>{
-<span class="lnr">47 </span>    <span class="Type">var</span><span class="javaScriptFuncBlock"> desc = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">sup, prop);</span>
-<span class="lnr">48 </span>    <span class="Statement">return</span><span class="javaScriptFuncBlock"> desc.get ?</span>
-<span class="lnr">49 </span>        desc.set.call(<span class="javaScriptFuncBlock">that, val) :</span>
-<span class="lnr">50 </span>        that[<span class="javaScriptFuncBlock">prop] = val;</span>
-<span class="lnr">51 </span>}
-<span class="lnr">52 </span>
+<span class="lnr">21 </span>    <span class="Identifier">function</span><span class=""> </span>__extend (a, b)<span class=""> </span>{
+<span class="lnr">22 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.defineProperties</span>(<span class="javaScriptFuncBlock">a, </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptors</span><span class="javaScriptParen">(</span><span class="javaScriptFuncBlock">b));</span>
+<span class="lnr">23 </span>    }
+<span class="lnr">24 </span>    <span class="Identifier">function</span><span class=""> </span>__prototypeForObject (proto, obj)<span class=""> </span>{
+<span class="lnr">25 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.create</span>(<span class="javaScriptFuncBlock">proto, </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptors</span><span class="javaScriptParen">(</span><span class="javaScriptFuncBlock">obj));</span>
+<span class="lnr">26 </span>    }
+<span class="lnr">27 </span>    <span class="Identifier">function</span><span class=""> </span>__prototypeForFunction (proto, obj)<span class=""> </span>{
+<span class="lnr">28 </span>        obj.__proto__ = proto;
+<span class="lnr">29 </span>        obj.prototype = {
+<span class="lnr">30 </span>            <span class="Statement">__proto__</span><span class="javaScriptFuncBlock">: proto.prototype,</span>
+<span class="lnr">31 </span>            <span class="Statement">constructor</span><span class="javaScriptFuncBlock">: obj</span>
+<span class="lnr">32 </span>        };
+<span class="lnr">33 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
+<span class="lnr">34 </span>    }
+<span class="lnr">35 </span>    <span class="Identifier">function</span><span class=""> </span>__get (sup, prop, that)<span class=""> </span>{
+<span class="lnr">36 </span>        <span class="Type">var</span><span class="javaScriptFuncBlock"> desc = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">sup, prop);</span>
+<span class="lnr">37 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> desc.get ?</span>
+<span class="lnr">38 </span>            desc.get.call(<span class="javaScriptFuncBlock">that) :</span>
+<span class="lnr">39 </span>            desc.value;
+<span class="lnr">40 </span>    }
+<span class="lnr">41 </span>    <span class="Identifier">function</span><span class=""> </span>__set (sup, prop, that, val)<span class=""> </span>{
+<span class="lnr">42 </span>        <span class="Type">var</span><span class="javaScriptFuncBlock"> desc = </span><span class="Special">Object</span><span class="javaScriptFuncBlock">.getOwnPropertyDescriptor</span>(<span class="javaScriptFuncBlock">sup, prop);</span>
+<span class="lnr">43 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> desc.get ?</span>
+<span class="lnr">44 </span>            desc.set.call(<span class="javaScriptFuncBlock">that, val) :</span>
+<span class="lnr">45 </span>            that[<span class="javaScriptFuncBlock">prop] = val;</span>
+<span class="lnr">46 </span>    }
+<span class="lnr">47 </span>    <span class="Identifier">function</span><span class=""> </span>__prototypeForLiteral (proto, obj)<span class=""> </span>{
+<span class="lnr">48 </span>        obj.__proto__ = proto;
+<span class="lnr">49 </span>        <span class="Statement">return</span><span class="javaScriptFuncBlock"> obj;</span>
+<span class="lnr">50 </span>    }
+<span class="lnr">51 </span>
 </pre>
     <p>
     There's also a command-line version:
@@ -193,6 +192,16 @@ console.log("Done.");
             return descriptors;
         };
     }
+    var __DMP__ = "__DEFMETHPROP__";
+    Object.defineMethod = function (obj, name, method) {
+        if (__DMP__ in method) {
+            var proto = Object.getPrototypeOf(obj);
+            obj[name] = method[__DMP__](proto);
+        } else {
+            obj[name] = method;
+        }
+        return obj;
+    };
 
     function __extend (a, b) {
         return Object.defineProperties(a, Object.getOwnPropertyDescriptors(b));
