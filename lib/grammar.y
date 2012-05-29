@@ -116,15 +116,14 @@ Literal
         var flags = yytext.slice(yytext.lastIndexOf('/')+1);
         $$ = yy.Node('Literal', new RegExp(body, flags), yy.loc(yy.locComb(@$,@2)));
         //$$ = yy.Node('RegExpExpression', {body:body,flags:flags});
-        yy.inRegex = false;
       }
     ;
 
 RegularExpressionLiteralBegin
     : '/'
-      { yy.inRegex = true; yy.lexer.unput($1); $$ = $1; }
+      { yy.lexer.begin('regex'); yy.lexer.unput($1); $$ = $1; }
     | DIVEQUAL
-      { yy.inRegex = true; yy.lexer.unput($1); $$ = $1; }
+      { yy.lexer.begin('regex'); yy.lexer.unput($1); $$ = $1; }
     ;
 
 Property

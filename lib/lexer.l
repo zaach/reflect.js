@@ -1,10 +1,13 @@
-esc  "\\"
-int  ([0-9]|[1-9][0-9]+)
-exp  ([eE][-+]?[0-9]+)
+int  [0-9]|[1-9][0-9]+
+exp  [eE][-+]?[0-9]+
 frac  ("."[0-9]+)
 IDS  [a-zA-Z$_]|"\u"[a-fA-F0-9]{4}
 BSL  "\\".
 RCLASS "["({BSL}|[^\\\]])*"]"
+
+%s regex
+
+%options flex
 
 %%
 
@@ -19,35 +22,17 @@ RCLASS "["({BSL}|[^\\\]])*"]"
 "0"[xX][a-fA-F0-9]+/([^a-zA-Z$_]{0,1})              return 'NUMBER';
 ([1-9][0-9]+|[0-9]){frac}?{exp}?/([^a-zA-Z$_]{0,1}) return 'NUMBER';
 
-'"'("\\x"[a-fA-F0-9]{2}|"\\u"[a-fA-F0-9]{4}|"\\"[^xu]|[^"{esc}\n])*'"'    {yytext = yytext.substr(1,yyleng-2); return 'STRING';}
-"'"("\\"['bfvnrt/{esc}]|"\\u"[a-fA-F0-9]{4}|[^'{esc}])*"'"    {yytext = yytext.substr(1,yyleng-2); return 'STRING';}
+'"'("\\x"[a-fA-F0-9]{2}|"\\u"[a-fA-F0-9]{4}|"\\"[^xu]|[^"\\\n])*'"'    {yytext = yytext.substr(1,yyleng-2); return 'STRING';}
+"'"("\\"['bfvnrt/]|"\\u"[a-fA-F0-9]{4}|[^'\\])*"'"    {yytext = yytext.substr(1,yyleng-2); return 'STRING';}
 
-/("/="({BSL}|{RCLASS}|[^[\\\/])*"/"({IDS})*) %{
-  if(!!yy.inRegex) {
-    var s = yy.lexer.matches[1];
-    for(var i=0;i<s.length;++i) {
-      yy.lexer.input();
-    }
-    yytext = s;
+<regex>"/="({BSL}|{RCLASS}|[^[\\\/])*"/"{IDS}* %{
+    this.begin('INITIAL');
     return 'REGEXP_BODY';
-  } else {
-    yy.lexer.input(); yy.lexer.input();
-    return 'DIVEQUAL';
-  };
 %}
 
-/("/"({BSL}|{RCLASS}|[^[\\\/*])({BSL}|{RCLASS}|[^[\\\/])*"/"({IDS})*) %{
-  if(!!yy.inRegex) {
-    var s = yy.lexer.matches[1];
-    for(var i=0;i<s.length;++i) {
-      yy.lexer.input();
-    }
-    yytext = s;
+<regex>"/"({BSL}|{RCLASS}|[^[\\\/*])({BSL}|{RCLASS}|[^[\\\/])*"/"{IDS}* %{
+    this.begin('INITIAL');
     return 'REGEXP_BODY';
-  } else {
-    yy.lexer.input();
-    return '/';
-  };
 %}
 
 
