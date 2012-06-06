@@ -18,7 +18,7 @@
   },
   "main": "dist/reflect.js",
   "engines": {
-    "node": "0.4 || 0.5"
+    "node": ">= 0.4"
   },
   "devDependencies": {
     "jison": "*",
