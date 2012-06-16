@@ -6,6 +6,7 @@
 
 var Reflect = require('../dist/reflect').Reflect;
 var Match = require('./match').Match;
+var mozBuilder = require('../dist/reflect').mozBuilder;
 
 var Pattern = Match.Pattern;
 var MatchError = Match.MatchError;
@@ -230,7 +231,7 @@ function tryStmt (body, catches, fin) {
     return Pattern({
         "type": "TryStatement",
         "block": body,
-        "handler": catches,
+        "handlers": catches||[],
         "finalizer": fin
     });
 }
@@ -521,7 +522,7 @@ function xmlCdata (cdata) {
 }
 
 function assertBlockStmt(src, patt) {
-    blockPatt(patt).assert(Reflect.parse(blockSrc(src)));
+    blockPatt(patt).assert(Reflect.parse(blockSrc(src), {builder: mozBuilder}));
 }
 
 function assertBlockExpr(src, patt) {
@@ -529,11 +530,11 @@ function assertBlockExpr(src, patt) {
 }
 
 function assertBlockDecl(src, patt, builder) {
-    blockPatt(patt).assert(Reflect.parse(blockSrc(src), {builder: builder}));
+    blockPatt(patt).assert(Reflect.parse(blockSrc(src), {builder: builder||mozBuilder}));
 }
 
 function assertLocalStmt(src, patt) {
-    localPatt(patt).assert(Reflect.parse(localSrc(src)));
+    localPatt(patt).assert(Reflect.parse(localSrc(src), {builder: mozBuilder}));
 }
 
 function assertLocalExpr(src, patt) {
@@ -541,20 +542,20 @@ function assertLocalExpr(src, patt) {
 }
 
 function assertLocalDecl(src, patt) {
-    localPatt(patt).assert(Reflect.parse(localSrc(src)));
+    localPatt(patt).assert(Reflect.parse(localSrc(src), {builder: mozBuilder}));
 }
 
 function assertGlobalStmt(src, patt, builder) {
-    program([patt]).assert(Reflect.parse(src, {builder: builder}));
+    program([patt]).assert(Reflect.parse(src, {builder: builder||mozBuilder}));
 }
 
 function assertGlobalExpr(src, patt, builder) {
-    program([exprStmt(patt)]).assert(Reflect.parse(src, {builder: builder}));
+    program([exprStmt(patt)]).assert(Reflect.parse(src, {builder: builder||mozBuilder}));
     //assertStmt(src, exprStmt(patt));
 }
 
 function assertGlobalDecl(src, patt) {
-    program([patt]).assert(Reflect.parse(src));
+    program([patt]).assert(Reflect.parse(src, {builder: mozBuilder}));
 }
 
 function assertStmt(src, patt) {
@@ -569,7 +570,6 @@ try {
     assertGlobalExpr(src, patt);
     assertBlockExpr(src, patt);
 } catch (e) {
-    console.log(src)
     throw e;
     }
 }
@@ -792,15 +792,15 @@ assertStmt("switch (foo) { case 1: 1; break; case 2: 2; break; default: 3; case 
                         caseClause(lit(42), [ exprStmt(lit(42)) ]) ]));
 assertStmt("try { } catch (e) { }",
            tryStmt(blockStmt([]),
-                   catchClause(ident("e"), null, blockStmt([])),
+                   [catchClause(ident("e"), null, blockStmt([]))],
                    null));
 assertStmt("try { } catch (e) { } finally { }",
            tryStmt(blockStmt([]),
-                   catchClause(ident("e"), null, blockStmt([])),
+                   [catchClause(ident("e"), null, blockStmt([]))],
                    blockStmt([])));
 assertStmt("try { } finally { }",
            tryStmt(blockStmt([]),
-                   null,
+                   [],
                    blockStmt([])));
 //assertStmt("try { } catch (e if foo) { } catch (e if bar) { } finally { }",
            //tryStmt(blockStmt([]),
@@ -1384,7 +1384,7 @@ assertGlobalExpr("this", 14, { thisExpression: function(){ return 14 }});
 //assertGlobalExpr("(let (x) x)", 20, { letExpression: function(){ return 20 }});
 
 assertGlobalStmt("switch (x) { case y: }", switchStmt(ident("x"), [1]), { switchCase: function(){ return 1 }});
-assertGlobalStmt("try { } catch (e) { }", tryStmt(blockStmt([]), 2, null), { catchClause: function(){ return 2 }});
+assertGlobalStmt("try { } catch (e) { }", tryStmt(blockStmt([]), [2], null), { catchClause: function(){ return 2 }});
 //assertGlobalStmt("try { } catch (e if e instanceof A) { } catch (e if e instanceof B) { }",
                  //tryStmt(blockStmt([]), [2, 2], null),
                  //{ catchClause: function(){ return 2 }});
@@ -1592,7 +1592,7 @@ return {
     tryStatement: function(body, catches, fin) {
         if (catches.length > 1)
             throw new SyntaxError("multiple catch clauses not supported");
-        var node = ["TryStmt", body, catches[0] || ["Empty"]];
+        var node = ["TryStmt", body, catches || ["Empty"]];
         if (fin)
             node.push(fin);
         return node;
