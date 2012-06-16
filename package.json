@@ -21,7 +21,7 @@
     "node": ">= 0.4"
   },
   "devDependencies": {
-    "jison": "*",
+    "jison": "0.3.9",
     "uglify-js": "*"
   },
   "scripts": {
