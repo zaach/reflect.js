@@ -48,9 +48,9 @@ Field
     | IDENT ':' Element
       { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
     | STRING ':' Element
-      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', String($1),yy.loc(@1)),value:$3,kind: "init"}; }
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', parseString($1),yy.loc(@1)),value:$3,kind: "init"}; }
     | NUMBER ':' Element
-      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', Number($1),yy.loc(@1)),value:$3,kind: "init"}; }
+      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', parseNum($1),yy.loc(@1)),value:$3,kind: "init"}; }
     ;
 
 Element
@@ -101,77 +101,77 @@ Keyword
 
 Literal
     : NULLTOKEN
-      { $$ = yy.Node('Literal', null, yy.loc(@1)); }
+      { $$ = yy.Node('Literal', null, yy.loc(@1), yytext); }
     | TRUETOKEN
-      { $$ = yy.Node('Literal', true, yy.loc(@1)); }
+      { $$ = yy.Node('Literal', true, yy.loc(@1), yytext); }
     | FALSETOKEN
-      { $$ = yy.Node('Literal', false, yy.loc(@1)); }
+      { $$ = yy.Node('Literal', false, yy.loc(@1), yytext); }
     | NUMBER
-      { $$ = yy.Node('Literal', Number($1), yy.loc(@1)); }
+      { $$ = yy.Node('Literal', parseNum($1), yy.loc(@1), yytext); }
     | STRING
-      { $$ = yy.Node('Literal', yy.escapeString(String($1)), yy.loc(@1)); }
+      { $$ = yy.Node('Literal', parseString($1), yy.loc(@1), yy.raw[yy.raw.length-1]);}
     | RegularExpressionLiteralBegin REGEXP_BODY
       {
-        var body = yytext.slice(1,yytext.lastIndexOf('/'));
-        var flags = yytext.slice(yytext.lastIndexOf('/')+1);
-        $$ = yy.Node('Literal', new RegExp(body, flags), yy.loc(yy.locComb(@$,@2)));
-        //$$ = yy.Node('RegExpExpression', {body:body,flags:flags});
+        var full = $1+$2;
+        var body = full.slice(1,full.lastIndexOf('/'));
+        var flags = full.slice(full.lastIndexOf('/')+1);
+        $$ = yy.Node('Literal', new RegExp(body, parseString(flags)), yy.loc(yy.locComb(@$,@2)), full);
       }
     ;
 
 RegularExpressionLiteralBegin
     : '/'
-      { yy.lexer.begin('regex'); yy.lexer.unput($1); $$ = $1; }
+      { yy.lexer.begin('regex'); /*yy.lexer.unput($1)*/; $$ = $1; }
     | DIVEQUAL
-      { yy.lexer.begin('regex'); yy.lexer.unput($1); $$ = $1; }
+      { yy.lexer.begin('regex'); /*yy.lexer.unput($1)*/; $$ = $1; }
     ;
 
 Property
     : IDENT /* object shorthand strawman */
-      { $$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:yy.Node('Identifier', $1,yy.loc(@1)),kind: "init"}; }
+      { $$ = yy.Node('Property', yy.Node('Identifier', $1,yy.loc(@1)),yy.Node('Identifier', $1,yy.loc(@1)),"init", yy.loc(@1)); }
     | IDENT ':' AssignmentExpr
-      { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
+      { yy.locComb(@$,@3);$$ = yy.Node('Property', yy.Node('Identifier', $1,yy.loc(@1)),$3,"init", yy.loc(@$)); }
     | Keyword ':' AssignmentExpr
-      { yy.locComb(@$,@3);$$ = {key:yy.Node('Identifier', $1,yy.loc(@1)),value:$3,kind: "init"}; }
+      { yy.locComb(@$,@3);$$ = yy.Node('Property', yy.Node('Identifier', $1,yy.loc(@1)),$3,"init", yy.loc(@$)); }
     | STRING ':' AssignmentExpr
-      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', String($1),yy.loc(@1)),value:$3,kind: "init"}; }
+      { yy.locComb(@$,@3);$$ = yy.Node('Property', yy.Node('Literal', parseString($1),yy.loc(@1), JSON.stringify($1)),$3,"init", yy.loc(@$)); }
     | NUMBER ':' AssignmentExpr
-      { yy.locComb(@$,@3);$$ = {key:yy.Node('Literal', Number($1),yy.loc(@1)),value:$3,kind: "init"}; }
+      { yy.locComb(@$,@3);$$ = yy.Node('Property', yy.Node('Literal', parseNum($1),yy.loc(@1), String($1)),$3,"init", yy.loc(@$)); }
     | IDENT IdentifierName '(' ')' Block
       {
           if ($1 !== 'get' && $1 !== 'set') throw new Error('Parse error, invalid set/get.'); // TODO: use jison ABORT when supported
           @$ = yy.locComb(@1,@5);
-          var fun = yy.Node('FunctionExpression',null,[],$Block, false, false, yy.loc(@$));
-          $$ = {key:yy.Node('Identifier', $2,yy.loc(@2)),value:fun,kind: $1};
+          var fun = yy.Node('FunctionExpression',null,[],$Block, false, false, yy.loc(@5));
+          $$ = yy.Node('Property', yy.Node('Identifier', $2,yy.loc(@2)),fun,$1, yy.loc(@$));
       }
     | IDENT IdentifierName '(' FormalParameterList ')' Block
       {
           @$ = yy.locComb(@1,@6);
           if ($1 !== 'get' && $1 !== 'set') throw new Error('Parse error, invalid set/get.'); // TODO: use jison ABORT when supported
-          var fun = yy.Node('FunctionExpression',null,$FormalParameterList,$Block,false,false,yy.loc(@$));
-          $$ = {key:yy.Node('Identifier', $2,yy.loc(@2)),value:fun,kind: $1};
+          var fun = yy.Node('FunctionExpression',null,$FormalParameterList,$Block,false,false,yy.loc(@6));
+          $$ = yy.Node('Property', yy.Node('Identifier', $2,yy.loc(@2)),fun,$1, yy.loc(@$));
       }
     | IDENT KeyLiteral '(' ')' Block
       {
           if ($1 !== 'get' && $1 !== 'set') throw new Error('Parse error, invalid set/get.'); // TODO: use jison ABORT when supported
           @$ = yy.locComb(@1,@5);
-          var fun = yy.Node('FunctionExpression',null,[],$Block, false, false, yy.loc(@$));
-          $$ = {key:$2,value:fun,kind: $1};
+          var fun = yy.Node('FunctionExpression',null,[],$Block, false, false, yy.loc(@5));
+          $$ = yy.Node('Property', $2,fun,$1,yy.loc(@$));
       }
     | IDENT KeyLiteral '(' FormalParameterList ')' Block
       {
           @$ = yy.locComb(@1,@6);
           if ($1 !== 'get' && $1 !== 'set') throw new Error('Parse error, invalid set/get.'); // TODO: use jison ABORT when supported
-          var fun = yy.Node('FunctionExpression',null,$FormalParameterList,$Block,false,false,yy.loc(@$));
-          $$ = {key:$2,value:fun,kind: $1};
+          var fun = yy.Node('FunctionExpression',null,$FormalParameterList,$Block,false,false,yy.loc(@6));
+          $$ = yy.Node('Property', $2,fun,$1,yy.loc(@$));
       }
     ;
 
 KeyLiteral
     : NUMBER
-      { $$ = yy.Node('Literal', Number($1), yy.loc(@1)); }
+      { $$ = yy.Node('Literal', parseNum($1), yy.loc(@1), yytext); }
     | STRING
-      { $$ = yy.Node('Literal', yy.escapeString(String($1)), yy.loc(@1)); }
+      { $$ = yy.Node('Literal', parseString($1), yy.loc(@1), yy.lexer.match); }
     ;
 
 PropertyList
@@ -193,13 +193,13 @@ PrimaryExpr
 
 PrimaryExprNoBrace
     : THISTOKEN
-      { $$ = yy.Node('ThisExpression'); }
+      { $$ = yy.Node('ThisExpression', yy.loc(@1)); }
     | Literal
     | ArrayLiteral
     | IDENT
       { $$ = yy.Node('Identifier', String($1), yy.loc(@1)); }
     | '(' Expr ')'
-      { $$ = $Expr; $$.parens = true; yy.locComb(@$,@3) }
+      { $$ = $Expr; if($$.loc){$$.loc = yy.loc([@$,@3]); $$.range = $$.loc.range; delete $$.loc.range;} }
     ;
 
 ArrayLiteral
@@ -241,7 +241,7 @@ MemberExpr
     | MemberExpr '[' Expr ']'
       { $$ = yy.Node('MemberExpression',$1,$3,true,yy.loc([@$,@4])); }
     | MemberExpr '.' IdentifierName
-      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3)),false,yy.loc([@$,@3])); }
+      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3), yy.loc(@3)),false,yy.loc([@$,@3])); }
     | NEW MemberExpr Arguments
       { $$ = yy.Node('NewExpression',$MemberExpr,$Arguments,yy.loc([@$,@3])); }
     ;
@@ -251,7 +251,7 @@ MemberExprNoBF
     | MemberExprNoBF '[' Expr ']'
       { $$ = yy.Node('MemberExpression',$1,$3,true,yy.loc([@$,@4])); }
     | MemberExprNoBF '.' IdentifierName
-      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3)),false,yy.loc([@$,@3])); }
+      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3), yy.loc(@3)),false,yy.loc([@$,@3])); }
     | NEW MemberExpr Arguments
       { $$ = yy.Node('NewExpression',$MemberExpr,$Arguments,yy.loc([@$,@3])); }
     ;
@@ -276,7 +276,7 @@ CallExpr
     | CallExpr '[' Expr ']'
       { $$ = yy.Node('MemberExpression',$1,$3,true,yy.loc([@$,@4])); }
     | CallExpr '.' IdentifierName
-      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3)),false,yy.loc([@$,@3])); }
+      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3), yy.loc(@3)),false,yy.loc([@$,@3])); }
     ;
 
 CallExprNoBF
@@ -287,7 +287,7 @@ CallExprNoBF
     | CallExprNoBF '[' Expr ']'
       { $$ = yy.Node('MemberExpression',$1,$3,true,yy.loc([@$,@4])); }
     | CallExprNoBF '.' IdentifierName
-      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3)),false,yy.loc([@$,@3])); }
+      { $$ = yy.Node('MemberExpression',$1,yy.Node('Identifier', String($3), yy.loc(@3)),false,yy.loc([@$,@3])); }
     ;
 
 Arguments
@@ -709,119 +709,150 @@ Block
 
 ConstStatement
     : CONSTTOKEN ConstDecralarionList ';'
-      { $$ = yy.Node('VariableDeclaration',"const",$2,yy.loc([@$,@3])) }
+      { $$ = yy.Node('VariableDeclaration', "const", $2, yy.loc([@$,@3])) }
     | CONSTTOKEN ConstDecralarionList error
-      { $$ = yy.Node('VariableDeclaration',"const",$2,yy.loc([@$,@2])) }
+      {
+        if ($3.length) {
+          @$.last_column = @3.first_column;
+          @$.range[1] = @3.range[0];
+        } else {
+          yy.locComb(@$, @2);
+        }
+
+        $$ = yy.Node('VariableDeclaration', "const", $2, yy.loc(@$));
+      }
     ;
 
 ConstDecralarionList
     : IDENT
-      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null, yy.loc(@1))]; }
     | IDENT Initializer
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2, yy.loc([@$, @2]))]; }
     | Pattern Initializer
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2)]; }
+      { $$ = [yy.Node('VariableDeclarator', $1, $2, yy.loc([@$, @2]))]; }
     | ConstDecralarionList ',' IDENT
-      { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+      { yy.locComb(@$,@3);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null, yy.loc(@3))); }
     | ConstDecralarionList ',' IDENT Initializer
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4, yy.loc([@3, @4]))); }
     | ConstDecralarionList ',' Pattern Initializer
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4, yy.loc([@3, @4]))); }
     ;
 
 ConstDecralarionListNoIn
     : IDENT
-      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null, yy.loc(@$))]; }
     | IDENT InitializerNoIn
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+      { yy.locComb(@$,@2);
+        $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2, yy.loc([@$, @2]))]; }
     | Pattern InitializerNoIn
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2)]; }
+      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2, yy.loc([@$, @2]))]; }
     | ConstDecralarionListNoIn ',' IDENT
-      { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+      { yy.locComb(@$,@3);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null, yy.loc(@3))); }
     | ConstDecralarionListNoIn ',' IDENT InitializerNoIn
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4, yy.loc([@3, @4]))); }
     | ConstDecralarionListNoIn ',' Pattern InitializerNoIn
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4)); }
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4, yy.loc([@3, @4]))); }
     ;
 
 VariableStatement
     : VAR VariableDeclarationList ';'
-      { $$ = yy.Node('VariableDeclaration',"var",$2,yy.loc([@$,@3])) }
+      { $$ = yy.Node('VariableDeclaration', "var", $2, yy.loc([@$, @3])) }
     | VAR VariableDeclarationList error
-      { $$ = yy.Node('VariableDeclaration',"var",$2,yy.loc([@$,@2])) }
+      { errorLoc($3, @$, @2, @3);
+        $$ = yy.Node('VariableDeclaration', "var", $2, yy.loc(@$)) }
     ;
 
 VariableDeclarationList
     : IDENT
-      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null, yy.loc(@1))]; }
     | IDENT Initializer
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2, yy.loc([@$, @2]))]; }
     | Pattern Initializer
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2)]; }
+      { $$ = [yy.Node('VariableDeclarator', $1, $2, yy.loc([@$, @2]))]; }
     | VariableDeclarationList ',' IDENT
-      { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+      { yy.locComb(@$,@3);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null, yy.loc(@3))); }
     | VariableDeclarationList ',' IDENT Initializer
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4, yy.loc([@3, @4]))); }
     | VariableDeclarationList ',' Pattern Initializer
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4, yy.loc([@3, @4]))); }
     ;
 
 VariableDeclarationListNoIn
     : IDENT
-      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null, yy.loc(@$))]; }
     | IDENT InitializerNoIn
       { yy.locComb(@$,@2);
-        $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+        $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2, yy.loc([@$, @2]))]; }
     | Pattern InitializerNoIn
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2)]; }
+      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2, yy.loc(@$))]; }
     | VariableDeclarationListNoIn ',' IDENT
       { yy.locComb(@$,@3);
-        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null, yy.loc(@3))); }
     | VariableDeclarationListNoIn ',' IDENT InitializerNoIn
       { yy.locComb(@$,@4);
-        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4, yy.loc([@3, @4]))); }
     | VariableDeclarationListNoIn ',' Pattern InitializerNoIn
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4)); }
+      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4, yy.loc([@3, @4]))); }
     ;
 
 LetStatement
     : LET LetDeclarationList ';'
-      { $$ = yy.Node('VariableDeclaration',"let",$2,yy.loc([@$,@3])) }
+      { $$ = yy.Node('VariableDeclaration', "let", $2, yy.loc([@$,@3])) }
     | LET LetDeclarationList error
-      { $$ = yy.Node('VariableDeclaration',"let",$2,yy.loc([@$,@2])) }
+      {
+        if ($3.length) {
+          @$.last_column = @3.first_column;
+          @$.range[1] = @3.range[0];
+        } else {
+          yy.locComb(@$, @2);
+        }
+
+        $$ = yy.Node('VariableDeclaration', "let", $2, yy.loc(@$));
+      }
     ;
 
 LetDeclarationList
     : IDENT
-      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null, yy.loc(@1))]; }
     | IDENT Initializer
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2, yy.loc([@$, @2]))]; }
     | Pattern Initializer
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2)]; }
+      { $$ = [yy.Node('VariableDeclarator', $1, $2, yy.loc([@$, @2]))]; }
     | LetDeclarationList ',' IDENT
-      { yy.locComb(@$,@3);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+      { yy.locComb(@$,@3);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null, yy.loc(@3))); }
     | LetDeclarationList ',' IDENT Initializer
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4, yy.loc([@3, @4]))); }
     | LetDeclarationList ',' Pattern Initializer
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4)); }
+      { yy.locComb(@$,@4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4, yy.loc([@3, @4]))); }
     ;
 
 LetDeclarationListNoIn
     : IDENT
-      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), null)]; }
+      { $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1, yy.loc(@1)), null, yy.loc(@$))]; }
     | IDENT InitializerNoIn
       { yy.locComb(@$,@2);
-        $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1,yy.loc(@1)), $2)]; }
+        $$ = [yy.Node('VariableDeclarator', yy.Node('Identifier', $1, yy.loc(@1)), $2, yy.loc([@$, @2]))]; }
     | Pattern InitializerNoIn
-      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2)]; }
+      { yy.locComb(@$,@2);$$ = [yy.Node('VariableDeclarator', $1, $2, yy.loc([@$, @2]))]; }
     | LetDeclarationListNoIn ',' IDENT
-      { yy.locComb(@$,@3);
-        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), null)); }
+      { yy.locComb(@$, @3);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3, yy.loc(@3)), null, yy.loc(@3))); }
     | LetDeclarationListNoIn ',' IDENT InitializerNoIn
-      { yy.locComb(@$,@4);
-        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3,yy.loc(@3)), $4)); }
+      { yy.locComb(@$, @4);
+        $$ = $1; $1.push(yy.Node('VariableDeclarator', yy.Node('Identifier', $3, yy.loc(@3)), $4, yy.loc([@3, @4]))); }
     | LetDeclarationListNoIn ',' Pattern InitializerNoIn
-      { yy.locComb(@$,@4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4)); }
+      { yy.locComb(@$, @4);$$ = $1; $1.push(yy.Node('VariableDeclarator', $3, $4, yy.loc([@3, @4]))); }
     ;
 
 Initializer
@@ -843,7 +874,24 @@ ExprStatement
     : ExprNoBF ';'
       { $$ = yy.Node('ExpressionStatement', $1,yy.loc([@$,@2])); }
     | ExprNoBF error
-      { $$ = yy.Node('ExpressionStatement', $1,yy.loc(@1)); }
+      {
+        if (@1.last_line === @2.last_line) {
+          if ($2.length) {
+          @$.last_column = @2.first_column;
+          @$.range[1] = @2.range[0];
+          }else{
+          @$.last_column = @2.last_column;
+          @$.range[1] = @2.range[1];
+          }
+        } else {
+          @$.last_column = @2.last_column;
+          @$.last_line = @2.last_line;
+          @$.range[1] = @2.range[1];
+          /*console.log('!err', $1, @1);*/
+          /*console.log('!err', $2, @2);*/
+        }
+        $$ = yy.Node('ExpressionStatement', $1, yy.loc(@$));
+      }
     ;
 
 IfStatement
@@ -851,6 +899,11 @@ IfStatement
       { $$ = yy.Node('IfStatement', $Expr, $Statement, null, yy.loc([@$,@5])); }
     | IF '(' Expr ')' Statement ELSE Statement
       { $$ = yy.Node('IfStatement', $Expr, $Statement1, $Statement2, yy.loc([@$,@7])); }
+    ;
+
+DoWhile
+    : DO Statement WHILE '(' Expr
+      { $$ = [$1, @1, $2, @2, $3, @3, $4, @4, $5, @5]; }
     ;
 
 IterationStatement
@@ -887,38 +940,38 @@ IterationStatement
 VarOrLet
     : VAR IDENT INTOKEN
       { $$ = yy.Node('VariableDeclaration',"var",
-          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), null)],
+          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), null, yy.loc(@2))],
           yy.loc([@1,@2])) }
     | VAR Pattern INTOKEN
       { $$ = yy.Node('VariableDeclaration',"var",
-          [yy.Node('VariableDeclarator',$2, null)],
+          [yy.Node('VariableDeclarator',$2, null, yy.loc(@2))],
           yy.loc([@1,@2])) }
     | LET IDENT INTOKEN
       { $$ = yy.Node('VariableDeclaration',"let",
-          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), null)],
+          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), null, yy.loc(@2))],
           yy.loc([@1,@2])) }
     | LET Pattern INTOKEN
       { $$ = yy.Node('VariableDeclaration',"let",
-          [yy.Node('VariableDeclarator',$2, null)],
+          [yy.Node('VariableDeclarator',$2, null, yy.loc(@2))],
           yy.loc([@1,@2])) }
     ;
 
 VarOrLetInitNoIn
     : VAR IDENT InitializerNoIn INTOKEN
       { $$ = yy.Node('VariableDeclaration',"var",
-          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), $3)],
+          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), $3, yy.loc([@2, @3]))],
           yy.loc([@1,@3])) }
     | VAR Pattern InitializerNoIn INTOKEN
       { $$ = yy.Node('VariableDeclaration',"var",
-          [yy.Node('VariableDeclarator',$2, $3)],
+          [yy.Node('VariableDeclarator',$2, $3, yy.loc([@2, @3]))],
           yy.loc([@1,@3])) }
     | LET IDENT InitializerNoIn INTOKEN
       { $$ = yy.Node('VariableDeclaration',"let",
-          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), $3)],
+          [yy.Node('VariableDeclarator',yy.Node('Identifier', $2,yy.loc(@2)), $3, yy.loc([@2, @3]))],
           yy.loc([@1,@3])) }
     | LET Pattern InitializerNoIn INTOKEN
       { $$ = yy.Node('VariableDeclaration',"let",
-          [yy.Node('VariableDeclarator',$2, $3)],
+          [yy.Node('VariableDeclarator',$2, $3, yy.loc([@2, @3]))],
           yy.loc([@1,@3])) }
     ;
 
@@ -936,45 +989,47 @@ ExprNoInOpt
 
 ContinueStatement
     : CONTINUE ';'
-      { $$ = yy.Node('ContinueStatement',null,yy.loc([@$,@2])); }
+      { $$ = yy.Node('ContinueStatement', null, yy.loc([@$, @2])); }
     | CONTINUE error
-      { $$ = yy.Node('ContinueStatement',null,yy.loc(@$)); }
+      { $$ = yy.Node('ContinueStatement', null, yy.loc([@$, ASIloc(@1)])); }
     | CONTINUE IDENT ';'
-      { $$ = yy.Node('ContinueStatement',yy.Node('Identifier', $2,yy.loc(@2)),yy.loc([@$,@3])); }
+      { $$ = yy.Node('ContinueStatement', yy.Node('Identifier', $2, yy.loc(@2)), yy.loc([@$, @3])); }
     | CONTINUE IDENT error
-      { $$ = yy.Node('ContinueStatement',yy.Node('Identifier', $2,yy.loc(@2)),yy.loc([@$,@2])); }
+      { errorLoc($3, @$, @2, @3);
+        $$ = yy.Node('ContinueStatement', yy.Node('Identifier', $2, yy.loc(@2)), yy.loc(@$)); }
     ;
 
 BreakStatement
     : BREAK ';'
-      { $$ = yy.Node('BreakStatement',null,yy.loc([@$,@2])); }
+      { $$ = yy.Node('BreakStatement', null, yy.loc([@$, @2])); }
     | BREAK error
-      { $$ = yy.Node('BreakStatement',null,yy.loc(@$)); }
+      { $$ = yy.Node('BreakStatement', null, yy.loc([@$, ASIloc(@1)])); }
     | BREAK IDENT ';'
-      { $$ = yy.Node('BreakStatement',yy.Node('Identifier', $2,yy.loc(@$)),yy.loc([@$,@3])); }
+      { $$ = yy.Node('BreakStatement', yy.Node('Identifier', $2, yy.loc(@2)), yy.loc([@$, @3])); }
     | BREAK IDENT error
-      { $$ = yy.Node('BreakStatement',yy.Node('Identifier', $2,yy.loc(@$)),yy.loc([@$,@2])); }
+      { errorLoc($3, @$, @2, @3);
+        $$ = yy.Node('BreakStatement', yy.Node('Identifier', $2, yy.loc(@2)), yy.loc(@$)); }
     ;
 
 ReturnStatement
     : RETURN ';'
-      { $$ = yy.Node('ReturnStatement',null,yy.loc([@$,@2])); }
+      { $$ = yy.Node('ReturnStatement', null, yy.loc([@$, @2])); }
     | RETURN error
-      { $$ = yy.Node('ReturnStatement',null,yy.loc(@$)); }
+      { $$ = yy.Node('ReturnStatement', null, yy.loc(ASIloc(@1))); }
     | RETURN Expr ';'
-      { $$ = yy.Node('ReturnStatement',$2,yy.loc([@$,@3])); }
+      { $$ = yy.Node('ReturnStatement', $2, yy.loc([@$, @3])); }
     | RETURN Expr error
-      { $$ = yy.Node('ReturnStatement',$2,yy.loc([@$,@2])); }
+      { $$ = yy.Node('ReturnStatement', $2, yy.loc([@$, ASIloc(@2)])); }
     ;
 
 WithStatement
     : WITH '(' Expr ')' Statement
-      { $$ = yy.Node('WithStatement',$Expr,$Statement,yy.loc([@$,@5])); }
+      { $$ = yy.Node('WithStatement', $Expr, $Statement, yy.loc([@$, @5])); }
     ;
 
 SwitchStatement
     : SWITCH '(' Expr ')' CaseBlock
-      { $$ = yy.Node('SwitchStatement',$Expr,$CaseBlock,yy.loc([@$,@5])); }
+      { $$ = yy.Node('SwitchStatement', $Expr, $CaseBlock, false, yy.loc([@$, @5])); }
     ;
 
 CaseBlock
@@ -994,7 +1049,7 @@ CaseClauses
     : CaseClause
       { $$ = [$1]; }
     | CaseClauses CaseClause
-      { $1.push($2); $$ = $1; }
+      { $1.push($2); $$ = $1; yy.locComb(@1, @2); }
     ;
 
 CaseClause
@@ -1018,9 +1073,10 @@ LabeledStatement
 
 ThrowStatement
     : THROW Expr ';'
-      { $$ = yy.Node('ThrowStatement', $Expr, @2, yy.loc([@$,@3])); }
+      { $$ = yy.Node('ThrowStatement', $Expr, yy.loc([@$,@3])); }
     | THROW Expr error
-      { $$ = yy.Node('ThrowStatement', $Expr, @2, yy.loc([@$,@2])); }
+      { errorLoc($3, @$, @2, @3);
+        $$ = yy.Node('ThrowStatement', $Expr, yy.loc(@$)); }
     ;
 
 TryStatement
@@ -1028,10 +1084,10 @@ TryStatement
       { $$ = yy.Node('TryStatement', $Block1, null, $Block2, yy.loc([@$,@4])); }
     | TRY Block CATCH '(' IDENT ')' Block
       { $$ = yy.Node('TryStatement', $Block1,
-                yy.Node('CatchClause',yy.Node('Identifier', $5,yy.loc(@5)),null, $Block2, yy.loc([@3,@7])), null, yy.loc([@$,@7])); }
+                [yy.Node('CatchClause',yy.Node('Identifier', $5,yy.loc(@5)),null, $Block2, yy.loc([@3,@7]))], null, yy.loc([@$,@7])); }
     | TRY Block CATCH '(' IDENT ')' Block FINALLY Block
       { $$ = yy.Node('TryStatement', $Block1,
-                yy.Node('CatchClause',yy.Node('Identifier', $5,yy.loc(@5)),null, $Block2, yy.loc([@3,@7])),
+                [yy.Node('CatchClause',yy.Node('Identifier', $5,yy.loc(@5)),null, $Block2, yy.loc([@3,@7]))],
                 $Block3, yy.loc([@$,@9])); }
     ;
 
@@ -1039,7 +1095,7 @@ DebuggerStatement
     : DEBUGGER ';'
       { $$ = yy.Node('DebuggerStatement', yy.loc([@$,@2])); }
     | DEBUGGER error
-      { $$ = yy.Node('DebuggerStatement', yy.loc(@1)); }
+      { $$ = yy.Node('DebuggerStatement', yy.loc([@$, ASIloc(@1)])); }
     ;
 
 FunctionDeclaration
@@ -1073,13 +1129,13 @@ FunctionExpr
 
 FormalParameterList
     : IDENT
-      { $$ = [yy.Node('Identifier', $1)]; }
+      { $$ = [yy.Node('Identifier', $1, yy.loc(@1))]; }
     | Pattern
       { $$ = [$1]; }
     | FormalParameterList ',' IDENT
-      { $$ = $1; $$.push(yy.Node('Identifier', $3,yy.loc(@3))); }
+      { $$ = $1; $$.push(yy.Node('Identifier', $3,yy.loc(@3))); yy.locComb(@$, @3); }
     | FormalParameterList ',' Pattern
-      { $$ = $1; $$.push($3); }
+      { $$ = $1; $$.push($3); yy.locComb(@$, @3); }
     ;
 
 FunctionBody
@@ -1090,9 +1146,23 @@ FunctionBody
 
 Program
     :
-      { return yy.Node('Program',[],yy.loc(@$)); }
+      {
+        var prog = yy.Node('Program', [], {
+            end: {column: 0, line: 0},
+            start: {column: 0, line: 0},
+        });
+        prog.tokens = yy.tokens;
+        prog.range = [0,0];
+        return prog;
+      }
     | SourceElements
-      { return yy.Node('Program',$1,yy.loc(@1)); }
+      {
+        var prog = yy.Node('Program',$1,yy.loc(@1));
+        if (yy.tokens.length) prog.tokens = yy.tokens;
+        if (yy.comments.length) prog.comments = yy.comments;
+        if (prog.loc) prog.range = rangeBlock($1);
+        return prog;
+      }
     ;
 
 SourceElements
@@ -1108,3 +1178,66 @@ SourceElement
     | ConstStatement
     | Statement
     ;
+
+%%
+
+function rangeBlock (arr) {
+    try {
+      var ret = arr.length > 2 ? [arr[0].range[0], arr[arr.length-1].range[1]] : arr[0].range;
+    } catch(e) {
+      console.error('range error: '+e,'??', arr);
+    }
+    return ret;
+}
+
+function range (a, b) {
+    return [a.range[0], b.range[1]];
+}
+
+function ASIloc (loc) {
+    loc.last_column+=1;
+    loc.range[1]=loc.range[1]+1;
+    return loc;
+}
+
+function errorLoc (token, loc1, loc2, loc3) {
+    if (token.length) {
+      loc1.last_column = loc3.first_column;
+      loc1.range[1] = loc3.range[0];
+    } else {
+      loc1.last_line = loc2.last_line;
+      loc1.last_column = loc2.last_column;
+      loc1.range = [loc1.range[0], loc2.range[1]];
+    }
+}
+
+function parseNum (num) {
+    if (num[0] === '0') {
+        if (num[1] === 'x' || num[1] === 'X') {
+            return parseInt(num, 16);
+        }
+        return parseInt(num, 8);
+    } else {
+        return Number(num);
+    }
+}
+
+function parseString (str) {
+    return str
+              .replace(/\\(u[a-fA-F0-9]{4}|x[a-fA-F0-9]{2})/g, function (match, hex) {
+                  return String.fromCharCode(parseInt(hex.slice(1), 16));
+              })
+              .replace(/\\([0-3]?[0-7]{1,2})/g, function (match, oct) {
+                  return String.fromCharCode(parseInt(oct, 8));
+              })
+              .replace(/\\0[^0-9]?/g,'\u0000')
+              .replace(/\\(?:\r\n?|\n)/g,'')
+              .replace(/\\n/g,'\n')
+              .replace(/\\r/g,'\r')
+              .replace(/\\t/g,'\t')
+              .replace(/\\v/g,'\v')
+              .replace(/\\f/g,'\f')
+              .replace(/\\b/g,'\b')
+              .replace(/\\(.)/g, "$1");
+}
+
