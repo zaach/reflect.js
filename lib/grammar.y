@@ -901,16 +901,17 @@ IfStatement
       { $$ = yy.Node('IfStatement', $Expr, $Statement1, $Statement2, yy.loc([@$,@7])); }
     ;
 
-DoWhile
-    : DO Statement WHILE '(' Expr
-      { $$ = [$1, @1, $2, @2, $3, @3, $4, @4, $5, @5]; }
+/* forces a reduction so the parser can be modified to allow ASI */
+While
+    : WHILE
+      { $$ = $1; yy.doWhile = true; }
     ;
 
 IterationStatement
-    : DO Statement WHILE '(' Expr ')' ';'
-      { $$ = yy.Node('DoWhileStatement', $Statement, $Expr,yy.loc([@$,@7])); }
-    | DO Statement WHILE '(' Expr ')' error
-      { $$ = yy.Node('DoWhileStatement', $Statement, $Expr,yy.loc([@$,@6])); }
+    : DO Statement While '(' Expr ')' ';'
+      { $$ = yy.Node('DoWhileStatement', $Statement, $Expr,yy.loc([@$,@7])); yy.doWhile = false; }
+    | DO Statement While '(' Expr ')' error
+      { $$ = yy.Node('DoWhileStatement', $Statement, $Expr,yy.loc([@$, @6])); yy.doWhile = false;}
     | WHILE '(' Expr ')' Statement
       { $$ = yy.Node('WhileStatement', $Expr, $Statement,yy.loc([@$,@5])); }
     | FOR '(' ExprNoInOpt ';' ExprOpt ';' ExprOpt ')' Statement
